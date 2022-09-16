@@ -43,8 +43,7 @@ static inline void dvec3_cross( const dvec3 dv3u, const dvec3 dv3v, dvec3 dv3n )
   dv3n[2] = ( dv3u[0] * dv3v[1] - dv3u[1] * dv3v[0] );
 }
 
-static inline float dvec3_norm( dvec3 dv3 )
-{
+static inline float dvec3_norm( dvec3 dv3 ){
   double msq = dvec3_dot( dv3, dv3 );
   if( msq > 0.0 ){
     double m = sqrt( msq );
