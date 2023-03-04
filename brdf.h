@@ -5,7 +5,7 @@
 
 real brdf_cosine;
 
-real dot_func(struct expr_func *f, vec_expr_t *args, void *c ){
+real in_func(struct expr_func *f, vec_expr_t *args, void *c ){
   return brdf_cosine;
 }
 
@@ -21,7 +21,7 @@ real exp_func(struct expr_func *f, vec_expr_t *args, void *c ){
 
 
 static struct expr_func brdf_user_funcs[] = {
-  { "dot",  dot_func,   NULL, 0 },
+  { "in",   in_func,    NULL, 0 },
   { "acos", acos_func,  NULL, 0 },
   { "exp",  exp_func,   NULL, 0 },
   { NULL,   NULL,       NULL, 0 },
