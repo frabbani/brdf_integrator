@@ -29,11 +29,6 @@ const double twopi = 2.0f * PI;
 
 float gauss_distrib( float proj ){
   const float m = 0.5f;
-  //static int  first = 1;
-  //if( first ){
-  //  printf( "gaussian distribution roughness: %f\n", m );
-  //  first = 0;
-  //}
   CLAMP( proj, 0.0f, 1.0f );
   float  w = acosf( proj ) / m;
   return exp( -(w*w) );
@@ -46,7 +41,6 @@ float lamb_distrib( float proj ){
 
 int main(){
   printf( "hello world!\n" );
-
 
   obj_t obj;
   if( !obj_load( &obj, "hemi.obj", 0 ) ){
@@ -107,6 +101,7 @@ int main(){
 
   obj_write( &obj, "lobe.obj" );
 
+  brdf_expr_term( brdf );
   obj_term( &obj );
   printf( "goodbye!\n" );
   return 0;

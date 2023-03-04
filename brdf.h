@@ -3,31 +3,27 @@
 // https://github.com/zserge/expr/blob/master/README.md
 #include "expr.h"
 
-float brdf_cosine;
+real brdf_cosine;
 
-float dot_func(struct expr_func *f, vec_expr_t *args, void *c ){
+real dot_func(struct expr_func *f, vec_expr_t *args, void *c ){
   return brdf_cosine;
 }
 
-static float acos_func(struct expr_func *f, vec_expr_t *args, void *c ){
-  float a = expr_eval (&vec_nth(args, 0));
-  return acosf(a);
+real acos_func(struct expr_func *f, vec_expr_t *args, void *c ){
+  real a = expr_eval( &vec_nth( args, 0 ) );
+  return (real)acos( (double)a );
 }
 
-float exp_func(struct expr_func *f, vec_expr_t *args, void *c ){
-  float a = expr_eval (&vec_nth(args, 0));
-  return exp(a);
+real exp_func(struct expr_func *f, vec_expr_t *args, void *c ){
+  real a = expr_eval( &vec_nth( args, 0 ) );
+  return (real)exp( (double)a );
 }
 
-float pow_func(struct expr_func *f, vec_expr_t *args, void *c ){
-  return brdf_cosine;
-}
 
 static struct expr_func brdf_user_funcs[] = {
   { "dot",  dot_func,   NULL, 0 },
   { "acos", acos_func,  NULL, 0 },
   { "exp",  exp_func,   NULL, 0 },
-  //{ "pow",  exp_func,   NULL, 0 },
   { NULL,   NULL,       NULL, 0 },
 };
 
@@ -97,8 +93,8 @@ void brdf_expr_term( brdf_expr_t brdf ){
   expr_destroy( brdf.e, &brdf.l );
 }
 
-double brdf_expr_eval( const brdf_expr_t *brdf, float cosine ){
-  brdf_cosine = cosine;
+double brdf_expr_eval( const brdf_expr_t *brdf, double cosine ){
+  brdf_cosine = (real)cosine;
   if( brdf->e )
     expr_eval( brdf->e );
   if( brdf->o )
