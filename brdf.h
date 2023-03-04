@@ -125,37 +125,3 @@ void brdf_expr_print( brdf_expr_t brdf ){
   }
   printf( "******************************\n");
 }
-/*
-
-  struct expr_var_list vars = {0};
-  struct expr *e = expr_create( s, strlen(s), &vars, user_funcs );
-  if( e == NULL ){
-    printf ("Syntax error");
-    return 1;
-  }
-  float result = expr_eval( e );
-  printf("result: %f\n", result);
-
-  expr_var_t *v = vars.head;
-  while(v){
-    printf( "%s: %f\n", v->name, v->value );
-    v = v->next;
-  }
-
-  expr_var_t *r = expr_var( &vars, "r", 1 );
-
-
-  for( int i = 0; i <= 10; i++ ){
-    x = (float)i / 10.0f;
-    expr_eval( e );
-    printf( "%f\n", r->value );
-    //expr_var_t *v = vars.head;
-    //while(v){
-    //  printf( "%s: %f\n", v->name, v->value );
-    //  v = v->next;
-    //}
-    printf( "***\n");
-  }
-
-  expr_destroy( e, &vars );
- */

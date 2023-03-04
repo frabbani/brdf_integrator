@@ -78,7 +78,6 @@ int main(){
     obj_f_t *f = &obj.fs[i];
     a += ( f->area * brdf_expr_eval( &brdf, f->c[2] ) * f->c[2] );
   }
-
   printf( "area............: %f\n", (float)a );
 
   double max_sq = 0.0;
@@ -98,44 +97,11 @@ int main(){
         dvec3_zero( obj.vs[i].p );
     }
   }
-
   obj_write( &obj, "lobe.obj" );
 
   brdf_expr_term( brdf );
   obj_term( &obj );
+
   printf( "goodbye!\n" );
   return 0;
-
-  /*
-  a = 0.0;
-  for( size_t i = 0; i < obj.num_fs; i++ ){
-    obj_f_t *f = &obj.fs[i];
-    dvec3 u, v, n;
-    dvec3_make ( u, obj.vs[ f->i0 ].p, obj.vs[ f->i1 ].p );
-    dvec3_make ( v, obj.vs[ f->i0 ].p, obj.vs[ f->i2 ].p );
-    dvec3_cross( u, v, n );
-    a += ( dvec3_norm( n ) / 2.0f * gauss_distrib( f->c[2] ) * f->c[2] );
-  }
-  printf( "area (method 2).: %f (BAD?)\n", a );
-  */
-
-
-  /*
-  fp = fopen( "lobeclipped.obj", "w" );
-  for( size_t i = 0; i < nvs; i++ )
-    fprintf( fp, "v %f %f %f\n",
-             vs[i].p[0], vs[i].p[1], vs[i].p[2] );
-  float3 n;
-  float  f = sinf( 5.0f * PI / 180.0f );
-  n[2] = f;
-  n[1] = 0.0f;
-  n[0] = sqrtf( 1.0f - n[2]*n[2] );
-  for( size_t i = 0; i < nfs; i++ ){
-    if( f3dot( fs[i].c, n ) >= 0.0f )
-      fprintf( fp, "f %d %d %d\n",
-               fs[i].i0+1, fs[i].i1+1 ,fs[i].i2+1 );
-  }
-  fclose( fp );
-  */
-
 }
