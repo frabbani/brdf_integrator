@@ -1,0 +1,11 @@
+// lambertian BRDF
+// out = 1
+
+// specular BRDF
+// n = 8
+// out = dot()**n
+
+// gaussian BRDF
+m = 0.5
+w = acos( dot() ) / m
+out = exp( -( w * w ) )

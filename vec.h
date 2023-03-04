@@ -37,6 +37,11 @@ static inline float dvec3_dot( const dvec3 dv3u, const dvec3 dv3v ){
   return( dv3u[0] * dv3v[0] + dv3u[1] * dv3v[1] + dv3u[2] * dv3v[2] );
 }
 
+static inline float dvec3_lensq( const dvec3 dv3 ){
+  return( dv3[0] * dv3[0] + dv3[1] * dv3[1] + dv3[2] * dv3[2] );
+}
+
+
 static inline void dvec3_cross( const dvec3 dv3u, const dvec3 dv3v, dvec3 dv3n ){
   dv3n[0] = ( dv3u[1] * dv3v[2] - dv3u[2] * dv3v[1] );
   dv3n[1] =-( dv3u[0] * dv3v[2] - dv3u[2] * dv3v[0] );

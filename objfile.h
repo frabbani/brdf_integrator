@@ -143,8 +143,6 @@ int32 obj_load( obj_t *obj, const char objfile[], int32 term ){
   return 1;
 }
 
-
-
 int32 obj_write( const obj_t *obj, const char objfile[] ){
   if( !obj ){
     printf( "%s:error - no OBJ\n", __FUNCTION__ );
@@ -164,16 +162,22 @@ int32 obj_write( const obj_t *obj, const char objfile[] ){
   fprintf( fp, "# %u verts:\n", obj->num_vs );
   for( uint32 i = 0; i < obj->num_vs; i++ )
     fprintf( fp, "v %f %f %f\n",
-             (float)obj->vs[i].p[0],
-             (float)obj->vs[i].p[1],
-             (float)obj->vs[i].p[2] );
+             (float)obj->vs[i].x,
+             (float)obj->vs[i].y,
+             (float)obj->vs[i].z );
 
   fprintf( fp, "# %u faces:\n", obj->num_fs );
-  for( uint32 i = 0; i < obj->num_fs; i++ )
-    fprintf( fp, "f %u %u %u\n",
-             obj->fs[i].i0 + 1,
-             obj->fs[i].i1 + 1,
-             obj->fs[i].i2 + 1 );
+  for( uint32 i = 0; i < obj->num_fs; i++ ){
+    obj_f_t *f = &obj->fs[i];
+
+    // check degenerate
+    if( 0.0 == dvec3_lensq( obj->vs[ f->i0 ].p ) &&
+        0.0 == dvec3_lensq( obj->vs[ f->i1 ].p ) &&
+        0.0 == dvec3_lensq( obj->vs[ f->i2 ].p ) )
+      continue;
+
+    fprintf( fp, "f %u %u %u\n", f->i0+1, f->i1+1, f->i2+1 );
+  }
 
   fclose( fp );
   return 1;
