@@ -4,7 +4,7 @@
 // out = 1
 
 // phong BRDF
-n = 0					// specular power
+n = 4					// specular power
 out = pow( dotr(), n )	// '**' uses 'powf', 'pow()' uses doubles
 
 // gaussian BRDF
