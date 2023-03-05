@@ -4,7 +4,7 @@
 
 real brdf_cosine;
 
-real rdotl_func(struct expr_func *f, vec_expr_t *args, void *c ){
+real dotl_func(struct expr_func *f, vec_expr_t *args, void *c ){
   return brdf_cosine;
 }
 
@@ -26,7 +26,7 @@ real pow_func(struct expr_func *f, vec_expr_t *args, void *c ){
 
 
 static struct expr_func brdf_user_funcs[] = {
-  { "rdotl", rdotl_func, NULL, 0 },
+  { "dotl", dotl_func, NULL, 0 },
   { "acos", acos_func, NULL, 0 },
   { "exp", exp_func, NULL, 0 },
   { "pow", pow_func, NULL, 0 },

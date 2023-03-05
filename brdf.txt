@@ -5,9 +5,9 @@
 
 // phong BRDF
 n = 8				// specular power
-out = rdotl()**n	// both '**' and 'pow()' work
+out = dotl()**n	// both '**' and 'pow()' work
 
 // gaussian BRDF
 // m = 0.5
-// w = acos( rdotl() ) / m
+// w = acos( dotl() ) / m
 // out = exp( -( w * w ) )
