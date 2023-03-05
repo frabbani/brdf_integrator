@@ -1,11 +1,13 @@
+// https://en.wikipedia.org/wiki/Specular_highlight
+
 // lambertian BRDF
 // out = 1
 
-// specular BRDF
-// n = 8
-// out = in()**n
+// phong BRDF
+n = 8				// specular power
+out = rdotl()**n	// both '**' and 'pow()' work
 
 // gaussian BRDF
-m = 0.5
-w = acos( in() ) / m
-out = exp( -( w * w ) )
+// m = 0.5
+// w = acos( rdotl() ) / m
+// out = exp( -( w * w ) )

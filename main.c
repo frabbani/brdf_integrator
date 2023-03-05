@@ -25,36 +25,24 @@ typedef uint64_t uint64;
 
 #define PI  3.14159265358979323846
 
-const double twopi = 2.0f * PI;
-
-float gauss_distrib( float proj ){
-  const float m = 0.5f;
-  CLAMP( proj, 0.0f, 1.0f );
-  float  w = acosf( proj ) / m;
-  return exp( -(w*w) );
-}
-
-float lamb_distrib( float proj ){
-  return 1.0f;
-}
-
 
 int main(){
   printf( "hello world!\n" );
 
   obj_t obj;
   if( !obj_load( &obj, "hemi.obj", 0 ) ){
-    printf( "aborting. missing hemisphere object\n" );
+    printf( "error -hemisphere OBJ model not found\n" );
     return 0;
   }
+  brdf_expr_t brdf;
+  brdf_expr_load( &brdf, "brdf.txt", 0 );
 
-  brdf_expr_t brdf = brdf_expr_load();
   if( !brdf.e ){
-    printf( "aborting. invalid brdf definition\n" );
+    printf( "error - invalid BRDF\n" );
     return 0;
   }
   else
-    brdf_expr_print(brdf);
+    brdf_expr_print( &brdf );
 
 
   double a = 0.0;
@@ -66,7 +54,7 @@ int main(){
 
   double h = 0.0;
   for( uint32 i = 0; i < obj.num_vs; i++ ){
-    h += lamb_distrib( obj.vs[i].z ) * obj.vs[i].z;
+    h += obj.vs[i].z;
   }
   h /= (double)obj.num_vs;
 
@@ -99,7 +87,7 @@ int main(){
   }
   obj_write( &obj, "lobe.obj" );
 
-  brdf_expr_term( brdf );
+  brdf_expr_term( &brdf );
   obj_term( &obj );
 
   printf( "goodbye!\n" );

@@ -47,48 +47,44 @@ void obj_term( obj_t *obj ){
 
 int32 obj_load( obj_t *obj, const char objfile[], int32 term ){
   if( !obj ){
-    printf( "%s:error - no OBJ\n", __FUNCTION__ );
+    printf( "%s:error - you has no OBJ\n", __FUNCTION__ );
     return 0;
   }
-
+  if( !objfile ){
+    printf( "%s:error - OBJ file not specified\n", __FUNCTION__ );
+    return 0;
+  }
   if( term )
     obj_term( obj );
   else
     memset( obj, 0, sizeof(obj_t) );
 
-  if( !objfile ){
-    printf( "%s:error - invalid OBJ filename '%s'\n", __FUNCTION__, objfile );
-    return 0;
-  }
 
   FILE *fp = fopen( objfile, "r" );
   if( !fp ){
-    printf( "%s:error - OBJ file doesn't exist\n", __FUNCTION__ );
+    printf( "%s:error - failed to read OBJ file '%s'\n", __FUNCTION__, objfile );
     return 0;
   }
 
   char line[256];
 
-  strcpy( obj->file, objfile );
-
-  obj->num_fs = 0;
-  obj->num_vs = 0;
+  uint32 num_fs = 0;
+  uint32 num_vs = 0;
   while( fgets( line, sizeof(line), fp ) ){
     if( 'f' == line[0] && ' ' == line[1] )
-      obj->num_fs++;
+      num_fs++;
     if( 'v' == line[0] && ' ' == line[1] )
-      obj->num_vs++;
+      num_vs++;
   }
-  if( !obj->num_fs || !obj->num_vs ){
+  if( !num_fs || !num_vs ){
     fclose( fp );
-    printf( "%s:error - invalid OBJ file\n", __FUNCTION__ );
+    printf( "%s:error - OBJ file '%s' is invalid\n", __FUNCTION__, objfile );
     return 0;
   }
 
-  obj->vs = malloc( obj->num_vs * sizeof(obj_v_t) );
-  obj->fs = malloc( obj->num_fs * sizeof(obj_f_t) );
-  obj->num_fs =
-  obj->num_vs = 0;
+  strcpy( obj->file, objfile );
+  obj->vs = malloc( num_vs * sizeof(obj_v_t) );
+  obj->fs = malloc( num_fs * sizeof(obj_f_t) );
   fseek( fp, 0, SEEK_SET );
   while( fgets( line, sizeof(line), fp ) ){
     if( 'f' == line[0] && ' ' == line[1] ){
@@ -136,8 +132,7 @@ int32 obj_load( obj_t *obj, const char objfile[], int32 term ){
     dvec3_add ( f->c, f->vs[1].p );
     dvec3_add ( f->c, f->vs[2].p );
     dvec3_muls( f->c, 1.0/3.0 );
-    //dvec3_norm( f->c );
-
+    dvec3_norm( f->c );
   }
 
   return 1;
@@ -145,7 +140,7 @@ int32 obj_load( obj_t *obj, const char objfile[], int32 term ){
 
 int32 obj_write( const obj_t *obj, const char objfile[] ){
   if( !obj ){
-    printf( "%s:error - no OBJ\n", __FUNCTION__ );
+    printf( "%s:error - you has no OBJ\n", __FUNCTION__ );
     return 0;
   }
 
@@ -170,10 +165,15 @@ int32 obj_write( const obj_t *obj, const char objfile[] ){
   for( uint32 i = 0; i < obj->num_fs; i++ ){
     obj_f_t *f = &obj->fs[i];
 
-    // check degenerate
-    if( 0.0 == dvec3_lensq( obj->vs[ f->i0 ].p ) &&
-        0.0 == dvec3_lensq( obj->vs[ f->i1 ].p ) &&
-        0.0 == dvec3_lensq( obj->vs[ f->i2 ].p ) )
+    // skip degenerate
+    int num_zeros = 0;
+    if( 0.0 == dvec3_lensq( obj->vs[ f->i0 ].p ) )
+      num_zeros++;
+    if( 0.0 == dvec3_lensq( obj->vs[ f->i1 ].p ) )
+      num_zeros++;
+    if( 0.0 == dvec3_lensq( obj->vs[ f->i1 ].p ) )
+      num_zeros++;
+    if( num_zeros >= 2 )
       continue;
 
     fprintf( fp, "f %u %u %u\n", f->i0+1, f->i1+1, f->i2+1 );

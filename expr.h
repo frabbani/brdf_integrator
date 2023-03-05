@@ -1,3 +1,5 @@
+// https://github.com/zserge/expr/blob/master/README.md
+
 #ifndef EXPR_H
 #define EXPR_H
 
