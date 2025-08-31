@@ -19,40 +19,36 @@ typedef double real;
 /*
  * Simple expandable vector implementation
  */
-static int vec_expand(char **buf, int *length, int *cap, int memsz) {
+static int vec_expand(char** buf, int* length, int* cap, int memsz) {
   if (*length + 1 > *cap) {
-    void *ptr;
+    void* ptr;
     int n = (*cap == 0) ? 1 : *cap << 1;
     ptr = realloc(*buf, n * memsz);
     if (ptr == NULL) {
       return -1; /* allocation failed */
     }
-    *buf = (char *)ptr;
+    *buf = (char*)ptr;
     *cap = n;
   }
   return 0;
 }
-#define vec(T)                                                                 \
-  struct {                                                                     \
-    T *buf;                                                                    \
-    int len;                                                                   \
-    int cap;                                                                   \
+#define vec(T) \
+  struct {     \
+    T* buf;    \
+    int len;   \
+    int cap;   \
   }
-#define vec_init()                                                             \
-  { NULL, 0, 0 }
+#define vec_init() {NULL, 0, 0}
 #define vec_len(v) ((v)->len)
-#define vec_unpack(v)                                                          \
-  (char **)&(v)->buf, &(v)->len, &(v)->cap, sizeof(*(v)->buf)
-#define vec_push(v, val)                                                       \
-  vec_expand(vec_unpack(v)) ? -1 : ((v)->buf[(v)->len++] = (val), 0)
+#define vec_unpack(v) (char**)&(v)->buf, &(v)->len, &(v)->cap, sizeof(*(v)->buf)
+#define vec_push(v, val) vec_expand(vec_unpack(v)) ? -1 : ((v)->buf[(v)->len++] = (val), 0)
 #define vec_nth(v, i) (v)->buf[i]
 #define vec_peek(v) (v)->buf[(v)->len - 1]
 #define vec_pop(v) (v)->buf[--(v)->len]
 #define vec_free(v) (free((v)->buf), (v)->buf = NULL, (v)->len = (v)->cap = 0)
-#define vec_foreach(v, var, iter)                                              \
-  if ((v)->len > 0)                                                            \
-    for ((iter) = 0; (iter) < (v)->len && (((var) = (v)->buf[(iter)]), 1);     \
-         ++(iter))
+#define vec_foreach(v, var, iter) \
+  if ((v)->len > 0)               \
+    for ((iter) = 0; (iter) < (v)->len && (((var) = (v)->buf[(iter)]), 1); ++(iter))
 
 /*
  * Expression data types
@@ -103,8 +99,8 @@ static int prec[] = {0, 1, 1, 1, 2, 2, 2, 2, 3,  3,  4,  4, 5, 5,
                      5, 5, 5, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0, 0};
 
 typedef vec(struct expr) vec_expr_t;
-typedef void (*exprfn_cleanup_t)(struct expr_func *f, void *context);
-typedef real (*exprfn_t)(struct expr_func *f, vec_expr_t *args, void *context);
+typedef void (*exprfn_cleanup_t)(struct expr_func* f, void* context);
+typedef real (*exprfn_t)(struct expr_func* f, vec_expr_t* args, void* context);
 
 struct expr {
   enum expr_type type;
@@ -113,24 +109,23 @@ struct expr {
       real value;
     } num;
     struct {
-      real *value;
+      real* value;
     } var;
     struct {
       vec_expr_t args;
     } op;
     struct {
-      struct expr_func *f;
+      struct expr_func* f;
       vec_expr_t args;
-      void *context;
+      void* context;
     } func;
   } param;
 };
 
-#define expr_init()                                                            \
-  { .type = (enum expr_type)0 }
+#define expr_init() {.type = (enum expr_type)0}
 
 struct expr_string {
-  const char *s;
+  const char* s;
   int n;
 };
 struct expr_arg {
@@ -143,29 +138,25 @@ typedef vec(struct expr_string) vec_str_t;
 typedef vec(struct expr_arg) vec_arg_t;
 
 static int expr_is_unary(enum expr_type op) {
-  return op == OP_UNARY_MINUS || op == OP_UNARY_LOGICAL_NOT ||
-         op == OP_UNARY_BITWISE_NOT;
+  return op == OP_UNARY_MINUS || op == OP_UNARY_LOGICAL_NOT || op == OP_UNARY_BITWISE_NOT;
 }
 
 static int expr_is_binary(enum expr_type op) {
-  return !expr_is_unary(op) && op != OP_CONST && op != OP_VAR &&
-         op != OP_FUNC && op != OP_UNKNOWN;
+  return !expr_is_unary(op) && op != OP_CONST && op != OP_VAR && op != OP_FUNC && op != OP_UNKNOWN;
 }
 
 static int expr_prec(enum expr_type a, enum expr_type b) {
-  int left =
-      expr_is_binary(a) && a != OP_ASSIGN && a != OP_POWER && a != OP_COMMA;
+  int left = expr_is_binary(a) && a != OP_ASSIGN && a != OP_POWER && a != OP_COMMA;
   return (left && prec[a] >= prec[b]) || (prec[a] > prec[b]);
 }
 
-#define isfirstvarchr(c)                                                       \
-  (((unsigned char)c >= '@' && c != '^' && c != '|') || c == '$')
-#define isvarchr(c)                                                            \
-  (((unsigned char)c >= '@' && c != '^' && c != '|') || c == '$' ||            \
-   c == '#' || (c >= '0' && c <= '9'))
+#define isfirstvarchr(c) (((unsigned char)c >= '@' && c != '^' && c != '|') || c == '$')
+#define isvarchr(c)                                                             \
+  (((unsigned char)c >= '@' && c != '^' && c != '|') || c == '$' || c == '#' || \
+   (c >= '0' && c <= '9'))
 
 static struct {
-  const char *s;
+  const char* s;
   const enum expr_type op;
 } OPS[] = {
     {"-u", OP_UNARY_MINUS},
@@ -200,7 +191,7 @@ static struct {
     {"^", OP_UNARY_BITWISE_NOT},
 };
 
-static enum expr_type expr_op(const char *s, size_t len, int unary) {
+static enum expr_type expr_op(const char* s, size_t len, int unary) {
   for (unsigned int i = 0; i < sizeof(OPS) / sizeof(OPS[0]); i++) {
     if (strlen(OPS[i].s) == len && strncmp(OPS[i].s, s, len) == 0 &&
         (unary == -1 || expr_is_unary(OPS[i].op) == unary)) {
@@ -210,7 +201,7 @@ static enum expr_type expr_op(const char *s, size_t len, int unary) {
   return OP_UNKNOWN;
 }
 
-static real expr_parse_number(const char *s, size_t len) {
+static real expr_parse_number(const char* s, size_t len) {
   real num = 0;
   unsigned int frac = 0;
   unsigned int digits = 0;
@@ -240,15 +231,14 @@ static real expr_parse_number(const char *s, size_t len) {
  * Functions
  */
 struct expr_func {
-  const char *name;
+  const char* name;
   exprfn_t f;
   exprfn_cleanup_t cleanup;
   size_t ctxsz;
 };
 
-static struct expr_func *expr_func(struct expr_func *funcs, const char *s,
-                                   size_t len) {
-  for (struct expr_func *f = funcs; f->name; f++) {
+static struct expr_func* expr_func(struct expr_func* funcs, const char* s, size_t len) {
+  for (struct expr_func* f = funcs; f->name; f++) {
     if (strlen(f->name) == len && strncmp(f->name, s, len) == 0) {
       return f;
     }
@@ -261,17 +251,16 @@ static struct expr_func *expr_func(struct expr_func *funcs, const char *s,
  */
 struct expr_var {
   real value;
-  struct expr_var *next;
+  struct expr_var* next;
   char name[];
 };
 
 struct expr_var_list {
-  struct expr_var *head;
+  struct expr_var* head;
 };
 
-static struct expr_var *expr_var(struct expr_var_list *vars, const char *s,
-                                 size_t len) {
-  struct expr_var *v = NULL;
+static struct expr_var* expr_var(struct expr_var_list* vars, const char* s, size_t len) {
+  struct expr_var* v = NULL;
   if (len == 0 || !isfirstvarchr(*s)) {
     return NULL;
   }
@@ -280,7 +269,7 @@ static struct expr_var *expr_var(struct expr_var_list *vars, const char *s,
       return v;
     }
   }
-  v = (struct expr_var *)calloc(1, sizeof(struct expr_var) + len + 1);
+  v = (struct expr_var*)calloc(1, sizeof(struct expr_var) + len + 1);
   if (v == NULL) {
     return NULL; /* allocation failed */
   }
@@ -302,104 +291,91 @@ static int to_int(real x) {
   }
 }
 
-static real expr_eval(struct expr *e) {
+static real expr_eval(struct expr* e) {
   real n;
   switch (e->type) {
-  case OP_UNARY_MINUS:
-    return -(expr_eval(&e->param.op.args.buf[0]));
-  case OP_UNARY_LOGICAL_NOT:
-    return !(expr_eval(&e->param.op.args.buf[0]));
-  case OP_UNARY_BITWISE_NOT:
-    return ~(to_int(expr_eval(&e->param.op.args.buf[0])));
-  case OP_POWER:
-    return powf(expr_eval(&e->param.op.args.buf[0]),
-                expr_eval(&e->param.op.args.buf[1]));
-  case OP_MULTIPLY:
-    return expr_eval(&e->param.op.args.buf[0]) *
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_DIVIDE:
-    return expr_eval(&e->param.op.args.buf[0]) /
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_REMAINDER:
-    return fmodf(expr_eval(&e->param.op.args.buf[0]),
-                 expr_eval(&e->param.op.args.buf[1]));
-  case OP_PLUS:
-    return expr_eval(&e->param.op.args.buf[0]) +
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_MINUS:
-    return expr_eval(&e->param.op.args.buf[0]) -
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_SHL:
-    return to_int(expr_eval(&e->param.op.args.buf[0]))
-           << to_int(expr_eval(&e->param.op.args.buf[1]));
-  case OP_SHR:
-    return to_int(expr_eval(&e->param.op.args.buf[0])) >>
-           to_int(expr_eval(&e->param.op.args.buf[1]));
-  case OP_LT:
-    return expr_eval(&e->param.op.args.buf[0]) <
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_LE:
-    return expr_eval(&e->param.op.args.buf[0]) <=
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_GT:
-    return expr_eval(&e->param.op.args.buf[0]) >
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_GE:
-    return expr_eval(&e->param.op.args.buf[0]) >=
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_EQ:
-    return expr_eval(&e->param.op.args.buf[0]) ==
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_NE:
-    return expr_eval(&e->param.op.args.buf[0]) !=
-           expr_eval(&e->param.op.args.buf[1]);
-  case OP_BITWISE_AND:
-    return to_int(expr_eval(&e->param.op.args.buf[0])) &
-           to_int(expr_eval(&e->param.op.args.buf[1]));
-  case OP_BITWISE_OR:
-    return to_int(expr_eval(&e->param.op.args.buf[0])) |
-           to_int(expr_eval(&e->param.op.args.buf[1]));
-  case OP_BITWISE_XOR:
-    return to_int(expr_eval(&e->param.op.args.buf[0])) ^
-           to_int(expr_eval(&e->param.op.args.buf[1]));
-  case OP_LOGICAL_AND:
-    n = expr_eval(&e->param.op.args.buf[0]);
-    if (n != 0) {
-      n = expr_eval(&e->param.op.args.buf[1]);
+    case OP_UNARY_MINUS:
+      return -(expr_eval(&e->param.op.args.buf[0]));
+    case OP_UNARY_LOGICAL_NOT:
+      return !(expr_eval(&e->param.op.args.buf[0]));
+    case OP_UNARY_BITWISE_NOT:
+      return ~(to_int(expr_eval(&e->param.op.args.buf[0])));
+    case OP_POWER:
+      return powf(expr_eval(&e->param.op.args.buf[0]), expr_eval(&e->param.op.args.buf[1]));
+    case OP_MULTIPLY:
+      return expr_eval(&e->param.op.args.buf[0]) * expr_eval(&e->param.op.args.buf[1]);
+    case OP_DIVIDE:
+      return expr_eval(&e->param.op.args.buf[0]) / expr_eval(&e->param.op.args.buf[1]);
+    case OP_REMAINDER:
+      return fmodf(expr_eval(&e->param.op.args.buf[0]), expr_eval(&e->param.op.args.buf[1]));
+    case OP_PLUS:
+      return expr_eval(&e->param.op.args.buf[0]) + expr_eval(&e->param.op.args.buf[1]);
+    case OP_MINUS:
+      return expr_eval(&e->param.op.args.buf[0]) - expr_eval(&e->param.op.args.buf[1]);
+    case OP_SHL:
+      return to_int(expr_eval(&e->param.op.args.buf[0]))
+             << to_int(expr_eval(&e->param.op.args.buf[1]));
+    case OP_SHR:
+      return to_int(expr_eval(&e->param.op.args.buf[0])) >>
+             to_int(expr_eval(&e->param.op.args.buf[1]));
+    case OP_LT:
+      return expr_eval(&e->param.op.args.buf[0]) < expr_eval(&e->param.op.args.buf[1]);
+    case OP_LE:
+      return expr_eval(&e->param.op.args.buf[0]) <= expr_eval(&e->param.op.args.buf[1]);
+    case OP_GT:
+      return expr_eval(&e->param.op.args.buf[0]) > expr_eval(&e->param.op.args.buf[1]);
+    case OP_GE:
+      return expr_eval(&e->param.op.args.buf[0]) >= expr_eval(&e->param.op.args.buf[1]);
+    case OP_EQ:
+      return expr_eval(&e->param.op.args.buf[0]) == expr_eval(&e->param.op.args.buf[1]);
+    case OP_NE:
+      return expr_eval(&e->param.op.args.buf[0]) != expr_eval(&e->param.op.args.buf[1]);
+    case OP_BITWISE_AND:
+      return to_int(expr_eval(&e->param.op.args.buf[0])) &
+             to_int(expr_eval(&e->param.op.args.buf[1]));
+    case OP_BITWISE_OR:
+      return to_int(expr_eval(&e->param.op.args.buf[0])) |
+             to_int(expr_eval(&e->param.op.args.buf[1]));
+    case OP_BITWISE_XOR:
+      return to_int(expr_eval(&e->param.op.args.buf[0])) ^
+             to_int(expr_eval(&e->param.op.args.buf[1]));
+    case OP_LOGICAL_AND:
+      n = expr_eval(&e->param.op.args.buf[0]);
       if (n != 0) {
-        return n;
+        n = expr_eval(&e->param.op.args.buf[1]);
+        if (n != 0) {
+          return n;
+        }
       }
-    }
-    return 0;
-  case OP_LOGICAL_OR:
-    n = expr_eval(&e->param.op.args.buf[0]);
-    if (n != 0 && !isnan(n)) {
+      return 0;
+    case OP_LOGICAL_OR:
+      n = expr_eval(&e->param.op.args.buf[0]);
+      if (n != 0 && !isnan(n)) {
+        return n;
+      } else {
+        n = expr_eval(&e->param.op.args.buf[1]);
+        if (n != 0) {
+          return n;
+        }
+      }
+      return 0;
+    case OP_ASSIGN:
+      n = expr_eval(&e->param.op.args.buf[1]);
+      if (vec_nth(&e->param.op.args, 0).type == OP_VAR) {
+        *e->param.op.args.buf[0].param.var.value = n;
+      }
       return n;
-    } else {
-      n = expr_eval(&e->param.op.args.buf[1]);
-      if (n != 0) {
-        return n;
-      }
-    }
-    return 0;
-  case OP_ASSIGN:
-    n = expr_eval(&e->param.op.args.buf[1]);
-    if (vec_nth(&e->param.op.args, 0).type == OP_VAR) {
-      *e->param.op.args.buf[0].param.var.value = n;
-    }
-    return n;
-  case OP_COMMA:
-    expr_eval(&e->param.op.args.buf[0]);
-    return expr_eval(&e->param.op.args.buf[1]);
-  case OP_CONST:
-    return e->param.num.value;
-  case OP_VAR:
-    return *e->param.var.value;
-  case OP_FUNC:
-    return e->param.func.f->f(e->param.func.f, &e->param.func.args,
-                              e->param.func.context);
-  default:
-    return NAN;
+    case OP_COMMA:
+      expr_eval(&e->param.op.args.buf[0]);
+      return expr_eval(&e->param.op.args.buf[1]);
+    case OP_CONST:
+      return e->param.num.value;
+    case OP_VAR:
+      return *e->param.var.value;
+    case OP_FUNC:
+      return e->param.func.f->f(e->param.func.f, &e->param.func.args, e->param.func.context);
+    default:
+      return NAN;
   }
 }
 
@@ -413,19 +389,17 @@ static real expr_eval(struct expr *e) {
 #define EXPR_UNARY (1 << 5)
 #define EXPR_COMMA (1 << 6)
 
-static int expr_next_token(const char *s, size_t len, int *flags) {
+static int expr_next_token(const char* s, size_t len, int* flags) {
   unsigned int i = 0;
   if (len == 0) {
     return 0;
   }
   char c = s[0];
   if (c == '#') {
-    for (; i < len && s[i] != '\n'; i++)
-      ;
+    for (; i < len && s[i] != '\n'; i++);
     return i;
   } else if (c == '\n') {
-    for (; i < len && isspace(s[i]); i++)
-      ;
+    for (; i < len && isspace(s[i]); i++);
     if (*flags & EXPR_TOP) {
       if (i == len || s[i] == ')') {
         *flags = *flags & (~EXPR_COMMA);
@@ -441,7 +415,7 @@ static int expr_next_token(const char *s, size_t len, int *flags) {
     return i;
   } else if (isdigit(c)) {
     if ((*flags & EXPR_TNUMBER) == 0) {
-      return -1; // unexpected number
+      return -1;  // unexpected number
     }
     *flags = EXPR_TOP | EXPR_TCLOSE;
     while ((c == '.' || isdigit(c)) && i < len) {
@@ -451,7 +425,7 @@ static int expr_next_token(const char *s, size_t len, int *flags) {
     return i;
   } else if (isfirstvarchr(c)) {
     if ((*flags & EXPR_TWORD) == 0) {
-      return -2; // unexpected word
+      return -2;  // unexpected word
     }
     *flags = EXPR_TOP | EXPR_TOPEN | EXPR_TCLOSE;
     while ((isvarchr(c)) && i < len) {
@@ -465,13 +439,13 @@ static int expr_next_token(const char *s, size_t len, int *flags) {
     } else if (c == ')' && (*flags & EXPR_TCLOSE) != 0) {
       *flags = EXPR_TOP | EXPR_TCLOSE;
     } else {
-      return -3; // unexpected parenthesis
+      return -3;  // unexpected parenthesis
     }
     return 1;
   } else {
     if ((*flags & EXPR_TOP) == 0) {
       if (expr_op(&c, 1, 1) == OP_UNKNOWN) {
-        return -4; // missing expected operand
+        return -4;  // missing expected operand
       }
       *flags = EXPR_TNUMBER | EXPR_TWORD | EXPR_TOPEN | EXPR_UNARY;
       return 1;
@@ -487,7 +461,7 @@ static int expr_next_token(const char *s, size_t len, int *flags) {
         c = s[i];
       }
       if (!found) {
-        return -5; // unknown operator
+        return -5;  // unknown operator
       }
       *flags = EXPR_TNUMBER | EXPR_TWORD | EXPR_TOPEN;
       return i;
@@ -499,7 +473,7 @@ static int expr_next_token(const char *s, size_t len, int *flags) {
 #define EXPR_PAREN_EXPECTED 1
 #define EXPR_PAREN_FORBIDDEN 2
 
-static int expr_bind(const char *s, size_t len, vec_expr_t *es) {
+static int expr_bind(const char* s, size_t len, vec_expr_t* es) {
   enum expr_type op = expr_op(s, len, -1);
   if (op == OP_UNKNOWN) {
     return -1;
@@ -539,15 +513,14 @@ static struct expr expr_const(real value) {
   return e;
 }
 
-static struct expr expr_varref(struct expr_var *v) {
+static struct expr expr_varref(struct expr_var* v) {
   struct expr e = expr_init();
   e.type = OP_VAR;
   e.param.var.value = &v->value;
   return e;
 }
 
-static struct expr expr_binary(enum expr_type type, struct expr a,
-                               struct expr b) {
+static struct expr expr_binary(enum expr_type type, struct expr a, struct expr b) {
   struct expr e = expr_init();
   e.type = type;
   vec_push(&e.param.op.args, a);
@@ -555,7 +528,7 @@ static struct expr expr_binary(enum expr_type type, struct expr a,
   return e;
 }
 
-static inline void expr_copy(struct expr *dst, struct expr *src) {
+static inline void expr_copy(struct expr* dst, struct expr* src) {
   int i;
   struct expr arg;
   dst->type = src->type;
@@ -582,24 +555,23 @@ static inline void expr_copy(struct expr *dst, struct expr *src) {
   }
 }
 
-static void expr_destroy_args(struct expr *e);
+static void expr_destroy_args(struct expr* e);
 
-static struct expr *expr_create(const char *s, size_t len,
-                                struct expr_var_list *vars,
-                                struct expr_func *funcs) {
+static struct expr* expr_create(const char* s, size_t len, struct expr_var_list* vars,
+                                struct expr_func* funcs) {
   real num;
-  struct expr_var *v;
-  const char *id = NULL;
+  struct expr_var* v;
+  const char* id = NULL;
   size_t idn = 0;
 
-  struct expr *result = NULL;
+  struct expr* result = NULL;
 
   vec_expr_t es = vec_init();
   vec_str_t os = vec_init();
   vec_arg_t as = vec_init();
 
   struct macro {
-    char *name;
+    char* name;
     vec_expr_t body;
   };
   vec(struct macro) macros = vec_init();
@@ -613,7 +585,7 @@ static struct expr *expr_create(const char *s, size_t len,
     } else if (n < 0) {
       goto cleanup;
     }
-    const char *tok = s;
+    const char* tok = s;
     s = s + n;
     len = len - n;
     if (*tok == '#') {
@@ -622,17 +594,17 @@ static struct expr *expr_create(const char *s, size_t len,
     if (flags & EXPR_UNARY) {
       if (n == 1) {
         switch (*tok) {
-        case '-':
-          tok = "-u";
-          break;
-        case '^':
-          tok = "^u";
-          break;
-        case '!':
-          tok = "!u";
-          break;
-        default:
-          goto cleanup;
+          case '-':
+            tok = "-u";
+            break;
+          case '^':
+            tok = "^u";
+            break;
+          case '!':
+            tok = "!u";
+            break;
+          default:
+            goto cleanup;
         }
         n = 2;
       }
@@ -658,8 +630,7 @@ static struct expr *expr_create(const char *s, size_t len,
             break;
           }
         }
-        if ((idn == 1 && id[0] == '$') || has_macro ||
-            expr_func(funcs, id, idn) != NULL) {
+        if ((idn == 1 && id[0] == '$') || has_macro || expr_func(funcs, id, idn) != NULL) {
           struct expr_string str = {id, (int)idn};
           vec_push(&os, str);
           paren = EXPR_PAREN_EXPECTED;
@@ -684,21 +655,20 @@ static struct expr *expr_create(const char *s, size_t len,
         struct expr_string str = {"(", 1};
         vec_push(&os, str);
       } else {
-        goto cleanup; // Bad call
+        goto cleanup;  // Bad call
       }
     } else if (paren == EXPR_PAREN_EXPECTED) {
-      goto cleanup; // Bad call
+      goto cleanup;  // Bad call
     } else if (n == 1 && *tok == ')') {
       int minlen = (vec_len(&as) > 0 ? vec_peek(&as).oslen : 0);
-      while (vec_len(&os) > minlen && *vec_peek(&os).s != '(' &&
-             *vec_peek(&os).s != '{') {
+      while (vec_len(&os) > minlen && *vec_peek(&os).s != '(' && *vec_peek(&os).s != '{') {
         struct expr_string str = vec_pop(&os);
         if (expr_bind(str.s, str.n, &es) == -1) {
           goto cleanup;
         }
       }
       if (vec_len(&os) == 0) {
-        goto cleanup; // Bad parens
+        goto cleanup;  // Bad parens
       }
       struct expr_string str = vec_pop(&os);
       if (str.n == 1 && *str.s == '{') {
@@ -712,12 +682,12 @@ static struct expr *expr_create(const char *s, size_t len,
             vec_free(&arg.args);
             goto cleanup; /* too few arguments for $() function */
           }
-          struct expr *u = &vec_nth(&arg.args, 0);
+          struct expr* u = &vec_nth(&arg.args, 0);
           if (u->type != OP_VAR) {
             vec_free(&arg.args);
             goto cleanup; /* first argument is not a variable */
           }
-          for (struct expr_var *v = vars->head; v; v = v->next) {
+          for (struct expr_var* v = vars->head; v; v = v->next) {
             if (&v->value == u->param.var.value) {
               struct macro m = {v->name, arg.args};
               vec_push(&macros, m);
@@ -730,23 +700,21 @@ static struct expr *expr_create(const char *s, size_t len,
           int found = -1;
           struct macro m;
           vec_foreach(&macros, m, i) {
-            if (strlen(m.name) == (size_t)str.n &&
-                strncmp(m.name, str.s, str.n) == 0) {
+            if (strlen(m.name) == (size_t)str.n && strncmp(m.name, str.s, str.n) == 0) {
               found = i;
             }
           }
           if (found != -1) {
             m = vec_nth(&macros, found);
             struct expr root = expr_const(0);
-            struct expr *p = &root;
+            struct expr* p = &root;
             /* Assign macro parameters */
             for (int j = 0; j < vec_len(&arg.args); j++) {
               char varname[4];
               snprintf(varname, sizeof(varname) - 1, "$%d", (j + 1));
-              struct expr_var *v = expr_var(vars, varname, strlen(varname));
+              struct expr_var* v = expr_var(vars, varname, strlen(varname));
               struct expr ev = expr_varref(v);
-              struct expr assign =
-                  expr_binary(OP_ASSIGN, ev, vec_nth(&arg.args, j));
+              struct expr assign = expr_binary(OP_ASSIGN, ev, vec_nth(&arg.args, j));
               *p = expr_binary(OP_COMMA, assign, expr_const(0));
               p = &vec_nth(&p->param.op.args, 1);
             }
@@ -763,13 +731,13 @@ static struct expr *expr_create(const char *s, size_t len,
             vec_push(&es, root);
             vec_free(&arg.args);
           } else {
-            struct expr_func *f = expr_func(funcs, str.s, str.n);
+            struct expr_func* f = expr_func(funcs, str.s, str.n);
             struct expr bound_func = expr_init();
             bound_func.type = OP_FUNC;
             bound_func.param.func.f = f;
             bound_func.param.func.args = arg.args;
             if (f->ctxsz > 0) {
-              void *p = calloc(1, f->ctxsz);
+              void* p = calloc(1, f->ctxsz);
               if (p == NULL) {
                 goto cleanup; /* allocation failed */
               }
@@ -821,7 +789,7 @@ static struct expr *expr_create(const char *s, size_t len,
         id = tok;
         idn = n;
       } else {
-        goto cleanup; // Bad variable name, e.g. '2.3.4' or '4ever'
+        goto cleanup;  // Bad variable name, e.g. '2.3.4' or '4ever'
       }
     }
     paren = paren_next;
@@ -834,14 +802,14 @@ static struct expr *expr_create(const char *s, size_t len,
   while (vec_len(&os) > 0) {
     struct expr_string rest = vec_pop(&os);
     if (rest.n == 1 && (*rest.s == '(' || *rest.s == ')')) {
-      goto cleanup; // Bad paren
+      goto cleanup;  // Bad paren
     }
     if (expr_bind(rest.s, rest.n, &es) == -1) {
       goto cleanup;
     }
   }
 
-  result = (struct expr *)calloc(1, sizeof(struct expr));
+  result = (struct expr*)calloc(1, sizeof(struct expr));
   if (result != NULL) {
     if (vec_len(&es) == 0) {
       result->type = OP_CONST;
@@ -876,7 +844,7 @@ cleanup:
   return result;
 }
 
-static void expr_destroy_args(struct expr *e) {
+static void expr_destroy_args(struct expr* e) {
   int i;
   struct expr arg;
   if (e->type == OP_FUNC) {
@@ -894,26 +862,24 @@ static void expr_destroy_args(struct expr *e) {
   }
 }
 
-static void expr_destroy(struct expr *e, struct expr_var_list *vars) {
+static void expr_destroy(struct expr* e, struct expr_var_list* vars) {
   if (e != NULL) {
     expr_destroy_args(e);
     free(e);
   }
   if (vars != NULL) {
-    for (struct expr_var *v = vars->head; v;) {
-      struct expr_var *next = v->next;
+    for (struct expr_var* v = vars->head; v;) {
+      struct expr_var* next = v->next;
       free(v);
       v = next;
     }
   }
 }
 
-
 typedef struct expr expr_t;
 typedef struct expr_var expr_var_t;
 typedef struct expr_var_list expr_var_list_t;
 typedef struct expr_func expr_func_t;
-
 
 #ifdef __cplusplus
 } /* extern "C" */
