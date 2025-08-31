@@ -104,7 +104,7 @@ LOOP:
   *src = newsrc;
 }
 
-int32 brdf_expr_load( brdf_expr_t *brdf, const char exprfile[], int32 term ){
+int brdf_expr_load( brdf_expr_t *brdf, const char exprfile[], int term ){
   if( !brdf ){
     printf( "%s:error - you has no BRDF\n", __FUNCTION__ );
     return 0;
